@@ -202,16 +202,52 @@
       });
     });
 
-    document.getElementById("doneButton").addEventListener("click", () => {
-      const selected = document.querySelector(
-        'input[name="category"]:checked'
-      );
+    document.getElementById("doneButton").addEventListener("click", async () => {
+  const selected = document.querySelector(
+    'input[name="category"]:checked'
+  );
 
-      if (!selected) return;
+  if (!selected) {
+    alert("Пожалуйста, выберите категорию");
+    return;
+  }
 
-      alert("Выбрана категория: " +
-        selected.closest(".category").innerText.trim());
+  const tg = window.Telegram?.WebApp;
+
+  if (!tg || !tg.initData) {
+    alert("Откройте выбор категории через Telegram");
+    return;
+  }
+
+  const button = document.getElementById("doneButton");
+  button.disabled = true;
+  button.textContent = "Сохраняем…";
+
+  try {
+    const response = await fetch("https://spblitguidebot.app.n8n.cloud/webhook/save-category", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({
+        initData: tg.initData,
+        category: selected.value
+      })
     });
+
+    if (!response.ok) {
+      throw new Error("Ошибка сохранения: " + response.status);
+    }
+
+    tg.close();
+
+  } catch (error) {
+    console.error(error);
+    alert("Не удалось сохранить категорию. Попробуйте ещё раз.");
+    button.disabled = false;
+    button.textContent = "Готово";
+  }
+});
   </script>
 </body>
 </html>
